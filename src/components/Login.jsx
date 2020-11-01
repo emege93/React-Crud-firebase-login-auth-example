@@ -1,10 +1,13 @@
 import React, {useState} from 'react'
+import { auth, db } from "../firebase";
+import { withRouter } from "react-router-dom";
 
-const Login = () => {
+const Login = (props) => {
 
     const [email, setEmail] = useState('')
     const [pass, setPass] = useState('')
     const [error, setError] = useState(null)
+
     const [esRegistro, setEsRegistro] = useState(true)
 
 
@@ -25,9 +28,60 @@ const Login = () => {
             setError('Contraseña de 6 caracteres o mas')
             return
         }
-
         setError(null)
         console.log('Todo OK');
+
+        if (esRegistro) {
+            registrar()
+        }else{
+            login()
+        }
+    }
+
+    const login = React.useCallback(async() => {
+        try {
+            const res = await auth.signInWithEmailAndPassword(email, pass)
+            console.log(res.user);
+            limpiarCampos()
+            props.history.push('/admin')
+        } catch (error) {
+            if (error.code === 'auth/user-not-found') {
+                setError('Email no válido')
+            }
+            if (error.code === 'auth/wrong-password') {
+                setError('Contraseña no válida')
+            }
+        }
+    }, [email,pass, props.history])
+
+    const registrar = React.useCallback(async() => {
+
+        try {
+            const res = await auth.createUserWithEmailAndPassword(email, pass)
+            console.log(res.user);
+            await db.collection('usuarios').doc(res.user.email).set({
+                email: res.user.email,
+                uid: res.user.uid
+            })
+            limpiarCampos()
+            props.history.push('/admin')
+
+        } catch (error) {
+            console.log(error);
+            if (error.code === 'auth/invalid-email') {
+                setError('Email no válido')
+            }
+            if (error.code === 'auth/email-already-in-use') {
+                setError('Email ya registrado')
+            }
+        }
+
+    }, [email,pass, props.history])
+
+    const limpiarCampos = () => {
+        setEmail('')
+        setPass('')
+        setError(null)
     }
 
         return (
@@ -83,4 +137,4 @@ const Login = () => {
         )
 }
 
-export default Login
+export default withRouter(Login)
