@@ -1,6 +1,11 @@
 import React, {useState, useEffect} from 'react'
 import {db} from "../firebase";
 
+import moment from 'moment';
+import 'moment/locale/es'
+
+
+
 function Firestore(props) {
 
   const [tareas, setTareas] = useState([])
@@ -111,7 +116,7 @@ function Firestore(props) {
           <ul className="list-group">
             {
               tareas.map(tarea => (
-                <li className="list-group-item" key={tarea.id}>{tarea.name} - {tarea.fecha}
+                <li className="list-group-item" key={tarea.id}>{tarea.name} - {moment(tarea.fecha).format('LLL')}
                   <button
                     className="btn btn-danger btn-sm float-right"
                     type="submit"
