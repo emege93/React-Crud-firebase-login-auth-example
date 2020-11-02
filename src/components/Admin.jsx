@@ -1,11 +1,12 @@
 import React, {useEffect, useState} from 'react'
 import { auth } from "../firebase";
 import { withRouter } from "react-router-dom";
+import Firestore from './Firestore';
 
 
 const Admin = (props) => {
 
-    const [user, setUser] = useState([])
+    const [user, setUser] = useState(null)
 
     useEffect(() => {
         if (auth.currentUser) {
@@ -18,11 +19,11 @@ const Admin = (props) => {
     }, [props.history])
 
     return (
-        <div>
-            <h2>Ruta protegida</h2>
+        <div className="mt-5 mb-5">
+            <h2 className="text-center">Ruta protegida</h2>
             {
                 user && (
-                    <h3>Sesion iniciada de {user.email}</h3>
+                    <Firestore user={user}/>
                 )
             }
         </div>
