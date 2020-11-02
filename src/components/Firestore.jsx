@@ -13,16 +13,37 @@ function Firestore(props) {
   const [modoEdicion, setModoEdicion] = useState(false)
   const [id, setId] = useState('')
 
+  const [ultimo, setUltimo] = useState(null)
+  const [desactivar, setDesactivar] = useState(false)
+
   useEffect(() => {
 
     const obtenerDatos = async () => {
+      setDesactivar(true)
 
       try {
-        console.log(props.user.uid);
-        const data = await db.collection(props.user.uid).get()
+        const data = await db.collection(props.user.uid)
+          .limit(2)
+          .orderBy('fecha','desc')
+          .get()
         const arrayData = data.docs.map(doc => ({id: doc.id, ...doc.data()}))
+
+        setUltimo(data.docs[data.docs.length - 1])
+
         console.log(arrayData)
         setTareas(arrayData)
+
+        const query = await db.collection(props.user.uid)
+        .limit(2)
+        .orderBy('fecha','desc')
+        .startAfter(data.docs[data.docs.length - 1])
+        .get()
+        if(query.empty){
+          console.log('no hay mas documentos');
+          setDesactivar(true)
+        }else{
+          setDesactivar(false)
+        }
 
       } catch (error) {
         console.log(error);
@@ -32,6 +53,38 @@ function Firestore(props) {
     obtenerDatos()
 
   }, [props.user.uid])
+
+  const siguiente = async() => {
+    console.log('siguiente');
+    try {
+      const data = await db.collection(props.user.uid)
+        .limit(2)
+        .orderBy('fecha','desc')
+        .startAfter(ultimo)
+        .get()
+      const arrayData = data.docs.map(doc => ({id: doc.id, ...doc.data()}))
+      setTareas([
+        ...tareas,
+        ...arrayData
+      ])
+      setUltimo(data.docs[data.docs.length - 1])
+
+      const query = await db.collection(props.user.uid)
+      .limit(2)
+      .orderBy('fecha','desc')
+      .startAfter(data.docs[data.docs.length - 1])
+      .get()
+      if(query.empty){
+        console.log('no hay mas documentos');
+        setDesactivar(true)
+      }else{
+        setDesactivar(false)
+      }
+
+    } catch (error) {
+      console.log(error);
+    }
+  }
 
   const agregar = async (e) => {
     e.preventDefault()
@@ -135,6 +188,13 @@ function Firestore(props) {
               ))
             }
           </ul>
+          <button 
+            className="btn btn-info btn-block mt-2 btn-sm"
+            onClick={() => siguiente()}
+            disabled={desactivar}
+          >
+            Siguientes...
+          </button>
         </div>
         <div className="col-md-6">
           <h3>
